@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador da dívida bruta/PIB do Brasil</title>
+<style>
+:root{
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#ffffff;--fg:#0b0b0b;--muted:#52514e;--faint:#898781;--card:#f4f3ee;--line:#d3d1c7;
+  --grid:rgba(137,135,129,.25);--accent:#2a78d6;--ref:#d03b3b;--btn:#ffffff;--btnb:#c3c2b7;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141413;--fg:#f2f1ec;--muted:#b8b6ad;--faint:#8f8d84;--card:#1f1f1d;--line:#3a3936;
+    --grid:rgba(180,178,170,.18);--accent:#5aa2f2;--ref:#ef6b6b;--btn:#1f1f1d;--btnb:#4a4945;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141413;--fg:#f2f1ec;--muted:#b8b6ad;--faint:#8f8d84;--card:#1f1f1d;--line:#3a3936;
+  --grid:rgba(180,178,170,.18);--accent:#5aa2f2;--ref:#ef6b6b;--btn:#1f1f1d;--btnb:#4a4945;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+main{max-width:880px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:clamp(22px,4.5vw,30px);line-height:1.2;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+button{font:inherit;font-size:14px;color:var(--fg);background:var(--btn);border:1px solid var(--btnb);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 24px;margin:0 0 14px}
+.row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.row b{color:var(--fg);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.endo{display:flex;gap:10px;align-items:flex-start;background:var(--card);border-radius:10px;padding:12px 14px;margin:0 0 14px;font-size:14px;color:var(--muted)}
+.endo input{margin-top:4px;accent-color:var(--accent)}
+.endo strong{color:var(--fg)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 14px}
+.card{background:var(--card);border-radius:10px;padding:14px}
+.card .k{font-size:13px;color:var(--muted)}
+.card .v{font-size:24px;font-weight:600}
+#msg{font-size:14px;color:var(--muted);margin:0 0 10px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted);margin:0 0 8px}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.chart{position:relative;width:100%;height:320px}
+.note{margin-top:22px;font-size:13px;color:var(--faint);border-top:1px solid var(--line);padding-top:14px}
+.note p{margin:0 0 8px}
+</style>
+</head>
+<body>
+<main>
+<h1>Dívida bruta/PIB do Brasil: simulador até 2036</h1>
+<p class="sub">Mexa no ajuste fiscal, nos juros e no crescimento e veja a trajetória da dívida. Ponto de partida: 82,9% do PIB (set/2026).</p>
+
+<div class="presets">
+  <button data-p="-0.5,4,12,1.5,4.5">Inércia</button>
+  <button data-p="2,5,12,2,4">Ajuste de 2%, juros altos</button>
+  <button data-p="2,5,9,2,3.5">Realista: 2% e Selic 9%</button>
+  <button data-p="3.5,4,10,1.8,4">Ajuste de mercado</button>
+</div>
+
+<div class="controls">
+  <div><div class="row"><span>Primário final (% do PIB)</span><b id="o1"></b></div><input type="range" id="s1" min="-1.5" max="5" step="0.1" value="2"></div>
+  <div><div class="row"><span>Anos para atingir o primário</span><b id="o2"></b></div><input type="range" id="s2" min="1" max="8" step="1" value="5"></div>
+  <div><div class="row"><span>Selic terminal em 2029</span><b id="o3"></b></div><input type="range" id="s3" min="7" max="15" step="0.25" value="9"></div>
+  <div><div class="row"><span>Crescimento real do PIB</span><b id="o4"></b></div><input type="range" id="s4" min="0" max="3.5" step="0.1" value="2"></div>
+  <div><div class="row"><span>IPCA (âncora de longo prazo)</span><b id="o5"></b></div><input type="range" id="s5" min="3" max="6" step="0.1" value="3.5"></div>
+  <div><div class="row"><span>Repasse da Selic ao custo da dívida</span><b id="o6"></b></div><input type="range" id="s6" min="70" max="100" step="1" value="90"></div>
+</div>
+
+<label class="endo">
+  <input type="checkbox" id="endo">
+  <span><strong>Modo endógeno:</strong> o IPCA e o crescimento reagem à Selic. Juro acima do neutro derruba a inflação e o PIB; juro abaixo do neutro faz o contrário. Desligado, os cinco controles são tratados como pacotes de cenário independentes.</span>
+</label>
+
+<div class="cards">
+  <div class="card"><div class="k">Dívida em 2036</div><div class="v" id="m1"></div></div>
+  <div class="card"><div class="k">Juro real terminal</div><div class="v" id="m2"></div></div>
+  <div class="card"><div class="k">r − g terminal</div><div class="v" id="m3"></div></div>
+  <div class="card"><div class="k">Primário que estabiliza</div><div class="v" id="m4"></div></div>
+</div>
+<p id="msg"></p>
+
+<div class="legend">
+  <span><i class="dot" style="background:var(--accent)"></i>Seu cenário</span>
+  <span><i class="dot" style="background:var(--ref)"></i>Inércia (referência)</span>
+  <span><i class="dot" style="background:var(--faint)"></i>Hoje (82,9%)</span>
+</div>
+<div class="chart"><canvas id="ch" role="img" aria-label="Trajetória da dívida bruta em percentual do PIB de 2026 a 2036 no cenário escolhido, comparada ao cenário de inércia e ao nível de hoje">Trajetória da dívida/PIB conforme os controles.</canvas></div>
+
+<div class="note">
+  <p><strong>Como o modelo funciona.</strong> A dívida de cada ano é a do ano anterior × (1 + juro nominal) ÷ [(1 + IPCA) × (1 + crescimento real)], menos o superávit primário. O juro nominal é o repasse escolhido × Selic; a Selic converge em linha reta de 13,75% para o valor escolhido em 2029. O resultado primário parte de −0,7% do PIB e converge ao valor final no prazo escolhido. O primário que estabiliza é o necessário para manter a dívida de hoje (82,9%) com o custo de juros terminal.</p>
+  <p><strong>Modo endógeno (ilustrativo).</strong> IPCA = âncora + 0,3 × (crescimento − 2) − 0,15 × (Selic − (âncora + 5)); crescimento efetivo = crescimento − 0,10 × (Selic real − 5). Os coeficientes são simplificações didáticas, não estimativas econométricas.</p>
+  <p><strong>Limites.</strong> Modelo simplificado, com repasse da Selic ao custo médio calibrado de forma aproximada, sem choques, câmbio, composição da dívida ou efeitos de credibilidade sobre o prêmio de risco. Fontes dos dados de partida: Banco Central do Brasil (dívida bruta e resultado primário) e Boletim Focus. Não é recomendação de política econômica nem de investimento.</p>
+</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+(function(){
+var B0=82.9,S0=-0.7,SEL0=13.75;
+var yrs=[];for(var y=2026;y<=2036;y++)yrs.push(y);
+function fmt(v,d){return v.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});}
+function $(id){return document.getElementById(id);}
+function run(tg,N,st,g,pi,k,endo){
+  var b=[B0],pT=pi,gT=g,selT=SEL0;
+  for(var t=1;t<yrs.length;t++){
+    var s=S0+(tg-S0)*Math.min(1,t/N);
+    var sel=SEL0+(st-SEL0)*Math.min(1,t/3);
+    var p=pi,gg=g;
+    if(endo){
+      p=pi+0.3*(g-2)-0.15*(sel-(pi+5));
+      gg=g-0.10*((sel-p)-5);
+    }
+    var f=(1+k*sel/100)/((1+p/100)*(1+gg/100));
+    b.push(b[t-1]*f-s);
+    pT=p;gT=gg;selT=sel;
+  }
+  var fT=(1+k*selT/100)/((1+pT/100)*(1+gT/100));
+  var rr=((1+k*selT/100)/(1+pT/100)-1)*100;
+  return {b:b,ss:B0*(fT-1),rr:rr,rg:rr-gT};
+}
+function cssv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+var chart=new Chart($("ch"),{
+  type:"line",
+  data:{labels:yrs,datasets:[
+    {data:[],borderWidth:2.5,pointRadius:3,fill:true,tension:0.2},
+    {data:[],borderWidth:1.5,pointRadius:0,borderDash:[2,3]},
+    {data:[],borderWidth:1.5,pointRadius:0,borderDash:[6,4]}
+  ]},
+  options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fmt(c.parsed.y,1)+"% do PIB";}}}},
+    scales:{y:{ticks:{callback:function(v){return v+"%";}}},x:{grid:{display:false}}}}
+});
+function theme(){
+  var a=cssv("--accent"),r=cssv("--ref"),f=cssv("--faint"),g=cssv("--grid");
+  var d=chart.data.datasets;
+  d[0].borderColor=a;d[0].pointBackgroundColor=a;d[0].backgroundColor=a+"1a";
+  d[1].borderColor=r;d[2].borderColor=f;
+  chart.options.scales.y.ticks.color=f;chart.options.scales.x.ticks.color=f;
+  chart.options.scales.y.grid.color=g;
+}
+function upd(){
+  var tg=+$("s1").value,N=+$("s2").value,st=+$("s3").value,g=+$("s4").value,pi=+$("s5").value,k=+$("s6").value/100,e=$("endo").checked;
+  var r=run(tg,N,st,g,pi,k,e),ref=run(-0.5,4,12,1.5,4.5,k,e),b=r.b;
+  $("o1").textContent=fmt(tg,1)+"%";$("o2").textContent=N;$("o3").textContent=fmt(st,2)+"%";
+  $("o4").textContent=fmt(g,1)+"%";$("o5").textContent=fmt(pi,1)+"%";$("o6").textContent=Math.round(k*100)+"%";
+  $("m1").textContent=fmt(b[10],1)+"%";
+  $("m2").textContent=fmt(r.rr,1)+"%";
+  $("m3").textContent=fmt(r.rg,1)+" p.p.";
+  $("m4").textContent=fmt(r.ss,1)+"% do PIB";
+  var d=b[10]-b[7],pk=Math.max.apply(null,b);
+  var traj=d<-0.5?"Em queda no fim do período":(d>0.5?"Ainda em alta em 2036":"Praticamente estável no fim do período");
+  $("msg").textContent=traj+". Pico de "+fmt(pk,1)+"% do PIB. Seu primário final é "+fmt(tg,1)+"% e o necessário para estabilizar a dívida de hoje é "+fmt(r.ss,1)+"%.";
+  var rd=function(a){return a.map(function(v){return Math.round(v*10)/10;});};
+  chart.data.datasets[0].data=rd(b);
+  chart.data.datasets[1].data=rd(ref.b);
+  chart.data.datasets[2].data=yrs.map(function(){return B0;});
+  var all=b.concat(ref.b);
+  chart.options.scales.y.min=Math.floor(Math.min(Math.min.apply(null,b),B0)/5)*5-5;
+  chart.options.scales.y.max=Math.ceil(Math.max.apply(null,all)/10)*10+5;
+  chart.update();
+}
+["s1","s2","s3","s4","s5","s6","endo"].forEach(function(id){$(id).addEventListener("input",upd);$(id).addEventListener("change",upd);});
+Array.prototype.forEach.call(document.querySelectorAll(".presets button"),function(btn){
+  btn.addEventListener("click",function(){
+    var p=btn.getAttribute("data-p").split(",").map(Number);
+    $("s1").value=p[0];$("s2").value=p[1];$("s3").value=p[2];$("s4").value=p[3];$("s5").value=p[4];$("s6").value=90;
+    upd();
+  });
+});
+if(window.matchMedia){
+  var mq=window.matchMedia("(prefers-color-scheme: dark)");
+  var h=function(){theme();upd();};
+  if(mq.addEventListener){mq.addEventListener("change",h);}else if(mq.addListener){mq.addListener(h);}
+}
+theme();upd();
+})();
+</script>
+</body>
+</html>
