@@ -57,10 +57,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <body>
 <main>
 <h1>Dívida bruta/PIB do Brasil: simulador até 2036</h1>
-<p class="sub">Mexa no ajuste fiscal, nos juros e no crescimento e veja a trajetória da dívida. Ponto de partida: 82,9% do PIB (set/2026).</p>
+<p class="sub">Mexa no ajuste fiscal, nos juros e no crescimento e veja a trajetória da dívida. Ponto de partida: 82,9% do PIB (set/2026). Atualizado em 11/11/2026 com o pacote fiscal em negociação.</p>
 
 <div class="presets">
   <button data-p="-0.5,4,12,1.5,4.5">Inércia</button>
+  <button data-p="-0.2,1,12,1.5,4.5">Só o pacote de 2027 (até R$ 80 bi)</button>
+  <button data-p="1,4,10,1.8,4">Pacote + meta de 2030</button>
   <button data-p="2,5,12,2,4">Ajuste de 2%, juros altos</button>
   <button data-p="2,5,9,2,3.5">Realista: 2% e Selic 9%</button>
   <button data-p="3.5,4,10,1.8,4">Ajuste de mercado</button>
@@ -98,6 +100,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 <div class="note">
   <p><strong>Como o modelo funciona.</strong> A dívida de cada ano é a do ano anterior × (1 + juro nominal) ÷ [(1 + IPCA) × (1 + crescimento real)], menos o superávit primário. O juro nominal é o repasse escolhido × Selic; a Selic converge em linha reta de 13,75% para o valor escolhido em 2029. O resultado primário parte de −0,7% do PIB e converge ao valor final no prazo escolhido. O primário que estabiliza é o necessário para manter a dívida de hoje (82,9%) com o custo de juros terminal.</p>
   <p><strong>Modo endógeno (ilustrativo).</strong> IPCA = âncora + 0,3 × (crescimento − 2) − 0,15 × (Selic − (âncora + 5)); crescimento efetivo = crescimento − 0,10 × (Selic real − 5). Os coeficientes são simplificações didáticas, não estimativas econométricas.</p>
+  <p><strong>Pacote fiscal de novembro de 2026.</strong> O governo negocia com o Congresso um projeto de lei complementar com impacto estimado entre R$ 50 bilhões e R$ 80 bilhões em 2027 (até cerca de 0,5% do PIB), ainda sem texto final nem data de votação. O botão “Só o pacote de 2027” soma 0,5 ponto ao resultado primário de partida (de −0,7% para −0,2% do PIB) e mantém os demais parâmetros da inércia. O botão “Pacote + meta de 2030” supõe novas rodadas de ajuste até a meta de 1,5% do PIB em 2030; como parte das despesas (sobretudo precatórios) fica fora da meta, o primário efetivo usado é de 1,0% do PIB, com Selic em 10%. São hipóteses de calibração, não números oficiais.</p>
   <p><strong>Limites.</strong> Modelo simplificado, com repasse da Selic ao custo médio calibrado de forma aproximada, sem choques, câmbio, composição da dívida ou efeitos de credibilidade sobre o prêmio de risco. Fontes dos dados de partida: Banco Central do Brasil (dívida bruta e resultado primário) e Boletim Focus. Não é recomendação de política econômica nem de investimento.</p>
 </div>
 </main>
